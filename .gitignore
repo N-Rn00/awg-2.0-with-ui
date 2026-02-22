@@ -1,0 +1,30 @@
+# Environment variables with secrets
+.env
+
+# AWG data directories
+awg-data/
+ui-data/
+simple-data/
+
+# Docker volumes
+*.volumes
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
+*.old

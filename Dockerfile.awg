@@ -1,0 +1,17 @@
+FROM --platform=linux/amd64 amneziavpn/amneziawg-go:latest
+
+# Install dependencies
+RUN apk add --no-cache bash iptables ip6tables
+
+# Create config directory
+RUN mkdir -p /etc/amnezia/amneziawg /etc/wireguard
+
+# Set environment
+ENV WG_QUICK_USERSPACE_IMPLEMENTATION=amneziawg-go
+ENV WG_SUDO=
+
+# Expose VPN port (will be overridden by docker-compose)
+EXPOSE 51820/udp
+
+# Keep container running
+CMD ["sleep", "infinity"]

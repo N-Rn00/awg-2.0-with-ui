@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # AmneziaWG Server
+  awg-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.awg
+    image: awg-server:latest
+    container_name: awg-server
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+    ports:
+      - "${WG_PORT:-443}:${WG_PORT:-443}/udp"
+      - "${PORT:-51821}:${PORT:-51821}/tcp"
+    volumes:
+      - ./awg-data:/etc/amnezia/amneziawg
+    networks:
+      - awg-network
+
+  # Web UI
+  awg-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    image: awg-ui:latest
+    container_name: awg-ui
+    restart: unless-stopped
+    depends_on:
+      - awg-server
+    network_mode: "service:awg-server"  # Share network namespace with AWG server
+    environment:
+      - LANGUAGE=en
+      - WG_HOST=${WG_HOST:-89.19.208.62}
+      - WG_PORT=${WG_PORT:-443}
+      - PORT=${PORT:-51821}
+      - PASSWORD_HASH=${PASSWORD_HASH}
+      # AWG 1.5 parameters
+      - JC=${JC:-5}
+      - JMIN=${JMIN:-50}
+      - JMAX=${JMAX:-1000}
+      - S1=${S1:-83}
+      - S2=${S2:-111}
+      - H1=${H1:-1634716843}
+      - H2=${H2:-1948862386}
+      - H3=${H3:-1386309140}
+      - H4=${H4:-128735623}
+      # AWG 2.0 NEW parameters
+      - S3=${S3:-33}
+      - S4=${S4:-6}
+      - I1=${I1}
+      - I2=${I2}
+      - I3=${I3}
+      - I4=${I4}
+      - I5=${I5}
+      # Userspace mode
+      - WG_QUICK_USERSPACE_IMPLEMENTATION=amneziawg-go
+      - WG_SUDO=
+    volumes:
+      - ./awg-data:/etc/amnezia/amneziawg
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  awg-network:
+    driver: bridge
