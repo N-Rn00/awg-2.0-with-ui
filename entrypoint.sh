@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "=== AmneziaWG 2.0 + Web UI - Instance 2 ==="
+echo "=== AmneziaWG 2.0 + Web UI ==="
 echo ""
 
 # Get AWG parameters from environment or use defaults
@@ -22,7 +22,11 @@ I3=${I3:-1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6
 I4=${I4:-6f7e8d9c0b1a2f3e4d5c6b7a8f9e0d1c2b3a4f5e6d7c8b9a0f1e2d3c4b5a6f7e8d9c0b1a2f3e4d5c6b7a8f9e0d1c}
 I5=${I5:-c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6}
 
-WG_PORT=${WG_PORT:-8443}
+WG_PORT=${WG_PORT:-443}
+
+# Auto-detect outbound interface
+OUTBOUND_IFACE=$(ip route | grep default | head -1 | awk '{print $5}')
+echo "Detected outbound interface: $OUTBOUND_IFACE"
 
 # Проверяем наличие конфига
 CONFIG_PATH=/etc/amnezia/amneziawg/awg0.conf
@@ -34,11 +38,11 @@ if [ ! -f "$CONFIG_PATH" ]; then
 
     cat > "$CONFIG_PATH" << CONFEOF
 [Interface]
-Address = 10.9.0.1/24
+Address = 10.8.0.1/24
 ListenPort = $WG_PORT
 PrivateKey = $PRIVKEY
-PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o $OUTBOUND_IFACE -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o $OUTBOUND_IFACE -j MASQUERADE
 
 # AWG parameters
 Jc = $JC
@@ -71,6 +75,6 @@ echo "AmneziaWG started successfully!"
 awg show awg0
 
 echo ""
-echo "Starting Web UI on port ${PORT:-51822}..."
+echo "Starting Web UI on port ${PORT:-51821}..."
 cd /app
 exec node server.js
