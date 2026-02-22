@@ -18,7 +18,7 @@ Production-ready AmneziaWG 2.0 VPN server with modern web management interface.
 
 - 🔐 **Full AmneziaWG 2.0 Support** - All obfuscation parameters (S1-S4, H1-H4, I1-I5, Jc/Jmin/Jmax)
 - 🌐 **Web Management UI** - Easy client management with QR codes
-- 🐳 **Docker-based** - Clean two-container architecture
+- 🐳 **Single Docker Container** - Simple, reliable architecture
 - 🚀 **Userspace Mode** - No kernel module required
 - 📱 **Mobile Ready** - QR codes for instant client setup
 - 🔧 **Fully Configurable** - All parameters via environment variables
@@ -26,20 +26,20 @@ Production-ready AmneziaWG 2.0 VPN server with modern web management interface.
 ## 🏗️ Architecture
 
 ```
-┌─────────────────┐     ┌──────────────┐
-│   awg-server    │────▶│    awg-ui    │
-│  (VPN Server)   │     │  (Web UI)    │
-└─────────────────┘     └──────────────┘
-         │                      │
-         └──────────┬───────────┘
-                    ▼
-              Shared Network
-           & Config Storage
+┌─────────────────────────┐
+│     awg-with-ui         │
+│  ┌──────────────────┐   │
+│  │  AmneziaWG 2.0   │   │
+│  │  (VPN Server)    │   │
+│  └──────────────────┘   │
+│  ┌──────────────────┐   │
+│  │   Web UI         │   │
+│  │  (Management)    │   │
+│  └──────────────────┘   │
+└─────────────────────────┘
 ```
 
-Two optimized containers:
-- **awg-server**: Minimal AmneziaWG VPN server
-- **awg-ui**: Web interface with management tools
+Single optimized container combining AWG server and web interface.
 
 ## 🚀 Quick Start
 
@@ -53,8 +53,8 @@ Two optimized containers:
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/yourusername/awg-v2.git
-cd awg-v2
+git clone https://github.com/N-Rn00/awg-2.0-with-ui.git
+cd awg-2.0-with-ui
 
 # 2. Create configuration
 cp .env.example .env
@@ -64,7 +64,7 @@ nano .env  # Edit with your settings
 docker run --rm node:20-alpine sh -c \
   "npm install bcryptjs && node -e \"console.log(require('bcryptjs').hashSync('YOUR_PASSWORD', 12))\""
 
-# 4. Start services
+# 4. Start service
 docker-compose up -d --build
 ```
 
@@ -151,16 +151,13 @@ Default credentials: password from `.env` PASSWORD_HASH
 
 ```bash
 # View AWG interface
-docker exec awg-ui awg show awg0
+docker exec awg-with-ui awg show awg0
 
 # View config
-docker exec awg-ui cat /etc/amnezia/amneziawg/awg0.conf
+docker exec awg-with-ui cat /etc/amnezia/amneziawg/awg0.conf
 
-# View server logs
-docker logs awg-server
-
-# View UI logs
-docker logs awg-ui
+# View logs
+docker logs awg-with-ui
 ```
 
 ## 🔧 Advanced Configuration
@@ -171,9 +168,15 @@ docker logs awg-ui
 # Edit .env
 WG_PORT=53  # Use DNS port to bypass firewalls
 
-# Recreate containers
+# Recreate container
 docker-compose up -d --force-recreate
 ```
+
+### Note: TCP vs UDP Ports
+
+- **VPN Port (WG_PORT)**: Uses **UDP** protocol - won't conflict with web servers on same port
+- **Web UI Port (PORT)**: Uses **TCP** protocol
+- Example: nginx on 443/TCP and AWG on 443/UDP can coexist on same server
 
 ### Custom AWG Parameters
 
@@ -223,6 +226,40 @@ Download AmneziaVPN:
 - 🐧 [Linux](https://github.com/amnezia-vpn/amnezia-client/releases)
 - 🍏 [macOS](https://github.com/amnezia-vpn/amnezia-client/releases)
 
+## 🔍 Troubleshooting
+
+### Container keeps restarting
+```bash
+# Check logs for errors
+docker logs awg-with-ui
+
+# Common issues:
+# - Incorrect PASSWORD_HASH format
+# - Port already in use
+# - Missing /dev/net/tun device
+```
+
+### Can't connect to VPN
+```bash
+# Verify server is listening
+docker exec awg-with-ui awg show awg0
+
+# Check firewall allows UDP traffic on WG_PORT
+# Verify WG_HOST is accessible from client
+# Ensure using AmneziaVPN client (not regular WireGuard)
+```
+
+### Web UI not accessible
+```bash
+# Check container is running
+docker ps | grep awg-with-ui
+
+# Verify port mapping
+docker port awg-with-ui
+
+# Check firewall allows TCP traffic on PORT
+```
+
 ## 🤝 Contributing
 
 Contributions welcome! Please:
@@ -245,9 +282,9 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 ## 📧 Support
 
-- 🐛 [Report Bug](https://github.com/yourusername/awg-v2/issues)
-- 💡 [Request Feature](https://github.com/yourusername/awg-v2/issues)
-- 💬 [Discussions](https://github.com/yourusername/awg-v2/discussions)
+- 🐛 [Report Bug](https://github.com/N-Rn00/awg-2.0-with-ui/issues)
+- 💡 [Request Feature](https://github.com/N-Rn00/awg-2.0-with-ui/issues)
+- 💬 [Discussions](https://github.com/N-Rn00/awg-2.0-with-ui/discussions)
 
 ---
 
