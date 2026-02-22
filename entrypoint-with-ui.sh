@@ -43,7 +43,7 @@ if [ ! -f "$CONFIG_PATH" ]; then
 else
     # Config exists - fix interface if it changed
     echo "Checking existing config for interface updates..."
-    sed -i "s/-o [^ ]*/-o $OUTBOUND_IFACE/g" "$CONFIG_PATH"
+    sed -i "s/-o eth[0-9]\+/-o $OUTBOUND_IFACE/g" "$CONFIG_PATH"
     echo "Interface in config updated to: $OUTBOUND_IFACE"
 fi
 
